@@ -4,8 +4,8 @@ from PyPDF2 import PdfReader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 # from langchain.embeddings import HuggingFaceEmbeddings
 # from langchain.vectorstores import FAISS
-# from langchain_community.embeddings import HuggingFaceEmbeddings
-from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_community.embeddings import HuggingFaceEmbeddings
+# from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
 from langchain_community.llms import LlamaCpp
 from langchain.docstore.document import Document
@@ -140,4 +140,5 @@ def match_form(query):
         matched = match[0]
         return f"📄 Here is the **{matched.title()}**:\n{form_mapping[matched]}"
     return None
+
 
