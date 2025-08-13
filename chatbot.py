@@ -1,45 +1,46 @@
-import os
-import shutil
-# from PyPDF2 import PdfReader
-# from langchain.text_splitter import RecursiveCharacterTextSplitter
-# from langchain.vectorstores import FAISS
-# from langchain.docstore.document import Document
-# from langchain.embeddings import HuggingFaceEmbeddings
-# # from langchain.llms import LlamaCpp
+import streamlit as st
 from langchain.chains import RetrievalQA
-from difflib import get_close_matches
 from form_mapping import form_mapping
-
+# from utils import update_faiss_index_if_needed, get_embedding_model, match_form, init_llm
+from langchain_community.vectorstores import FAISS
 from utils import *
+# INDEX_DIR = "path/to/index"  # make sure this is correct
 
-# Main chat function
-def run_chatbot():
-    print("Loading PDFs and vector store...")
-    # text = load_pdfs(PDF_DIR)
-    # chunks = split_text(text)
-    # update_faiss_index(chunks)
+st.title("📚 RAG Chatbot")
+
+@st.cache_resource
+def load_chain():
+    """Load the FAISS vector store and create the retrieval chain."""
     update_faiss_index_if_needed()
-
-    # vectorstore = FAISS.load_local(INDEX_DIR, get_embedding_model(),)
     vectorstore = FAISS.load_local(INDEX_DIR, get_embedding_model(), allow_dangerous_deserialization=True)
-
     retriever = vectorstore.as_retriever()
     llm = init_llm()
-    chain = RetrievalQA.from_chain_type(llm=llm, retriever=retriever)
+    return RetrievalQA.from_chain_type(llm=llm, retriever=retriever)
 
-    print("\n Chatbot is ready. Type 'exit' to quit.\n")
-    while True:
-        query = input("You: ")
-        if query.lower() in ["exit", "quit", "stop"]:
-            break
+chain = load_chain()
 
-        form_response = match_form(query)
-        if form_response:
-            print(f"Bot: {form_response}\n")
-            continue
+# Chat history
+if "messages" not in st.session_state:
+    st.session_state["messages"] = []
 
-        response = chain.run(query)
-        print(f"Bot: {response}\n")
+# Input box at bottom of screen
+query = st.chat_input("Ask me something about the PDFs...")
 
-if __name__ == "__main__":
-    run_chatbot()
+if query:
+    # Store user message
+    st.session_state["messages"].append({"role": "user", "content": query})
+
+    # Check if it's a form match
+    form_response = match_form(query)
+    if form_response:
+        bot_reply = form_response
+    else:
+        bot_reply = chain.run(query)
+
+    # Store bot reply
+    st.session_state["messages"].append({"role": "assistant", "content": bot_reply})
+
+# Display chat messages
+for msg in st.session_state["messages"]:
+    with st.chat_message(msg["role"]):
+        st.markdown(msg["content"])
