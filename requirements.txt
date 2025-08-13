@@ -1,6 +1,8 @@
+langchain-huggingface
 streamlit
 langchain
+langchain-community
 faiss-cpu
 openai
 PyPDF2
-langchain-huggingface
+transformers
